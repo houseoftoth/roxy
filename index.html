@@ -342,6 +342,14 @@
       entity.onclick = () => performAction(`action-${i}`, true);
       entityGrid.appendChild(entity);
     }
+
+    // Add periodic random predictions to the interface panel
+    setInterval(() => {
+      const output = document.getElementById("interfaceOutput");
+      const entry = document.createElement("div");
+      entry.textContent = interfaceResponses[Math.floor(Math.random() * interfaceResponses.length)];
+      output.prepend(entry);
+    }, 5000); // Generate every 5 seconds
   </script>
 </body>
 </html>
