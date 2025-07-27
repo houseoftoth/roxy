@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ROXY // Mirror Portal - ARMAMENT</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Courier New', monospace;
+      background: radial-gradient(#0a0a0a, #000000);
+      overflow: hidden;
+      color: #ccc;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+
+    .portal {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: rgba(0, 255, 255, 0.1);
+      box-shadow: 0 0 20px 10px cyan;
+      backdrop-filter: blur(5px);
+      z-index: 3;
+      overflow: hidden;
+    }
+
+    .emoji {
+      position: absolute;
+      font-size: 2em;
+      pointer-events: none;
+    }
+
+    .pond {
+      position: absolute;
+      bottom: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 500px;
+      height: 100px;
+      border-radius: 50%;
+      background: rgba(0, 200, 255, 0.3);
+      box-shadow: inset 0 0 40px cyan;
+      z-index: 2;
+      animation: ripple 2s infinite;
+    }
+
+    @keyframes ripple {
+      0% { box-shadow: inset 0 0 40px cyan; }
+      50% { box-shadow: inset 0 0 80px #0ff; }
+      100% { box-shadow: inset 0 0 40px cyan; }
+    }
+
+    .sync-bricks {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 100px;
+      background: repeating-linear-gradient(90deg, #333 0 20px, #444 20px 40px);
+      z-index: 1;
+    }
+
+    .entity-grid {
+      position: absolute;
+      top: 10%;
+      left: 10%;
+      width: 80%;
+      height: 80%;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 10px;
+      z-index: 3;
+    }
+
+    .entity {
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid cyan;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: cyan;
+      cursor: pointer;
+    }
+
+    .ufo-toggle {
+      position: absolute;
+      top: 5%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      background: #111;
+      border: 1px solid #0ff;
+      color: #0ff;
+      cursor: pointer;
+      z-index: 4;
+    }
+
+    .grok-portal {
+      position: absolute;
+      bottom: 10%;
+      right: 10%;
+      width: 150px;
+      height: 50px;
+      background: #0ff;
+      color: #000;
+      font-weight: bold;
+      text-align: center;
+      line-height: 50px;
+      border-radius: 10px;
+      cursor: pointer;
+      z-index: 4;
+    }
+
+    .interface-panel {
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #0ff;
+      padding: 10px;
+      z-index: 6;
+      border: 1px solid #0ff;
+      max-width: 300px;
+      overflow-y: auto;
+      max-height: 400px;
+    }
+    .interface-panel button {
+      background: #000;
+      color: #0ff;
+      border: 1px solid #0ff;
+      padding: 5px 10px;
+      margin: 5px 0;
+      width: 100%;
+      cursor: pointer;
+    }
+    .interface-output {
+      margin-top: 10px;
+      font-size: 0.8em;
+      white-space: pre-wrap;
+    }
+    .interface-output div {
+      animation: fadeIn 0.6s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="binaryCanvas"></canvas>
+  <div class="sync-bricks"></div>
+  <div class="pond" id="pond"></div>
+  <div class="portal" id="portal"></div>
+
+  <div class="entity-grid" id="entityGrid"></div>
+
+  <div class="ufo-toggle" onclick="toggleAlien()">🛸 View from UFO</div>
+  <div class="grok-portal" onclick="enterGrok()">Enter Grok</div>
+
+  <div class="interface-panel">
+    <strong>Interface Panel</strong>
+    <div class="interface-output" id="interfaceOutput"></div>
+    <button onclick="performAction('reset-entanglement', true)">Reset Entanglement</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('binaryCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const binary = "010101101110100110101001010110".split("");
+    const fontSize = 14;
+    let columns = Math.floor(canvas.width / fontSize);
+    let drops = Array.from({ length: columns }).map(() => 1);
+
+    function draw() {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = `hsl(${Math.random() * 360}, 100%, 50%)`;
+      ctx.font = `${fontSize}px monospace`;
+      for (let i = 0; i < drops.length; i++) {
+        const text = binary[Math.floor(Math.random() * binary.length)];
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        if (drops[i] * fontSize > canvas.height || Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        drops[i]++;
+      }
+    }
+    setInterval(draw, 33);
+
+    // Update columns and drops on resize
+    window.addEventListener('resize', () => {
+      columns = Math.floor(canvas.width / fontSize);
+      drops = Array.from({ length: columns }).map(() => 1);
+    });
+
+    const portal = document.getElementById('portal');
+    const persistentEmojis = [];
+
+    const emojiTypes = ['👽', '🛸', '🔮', '👻', '🦇', '🌕', '🧙', '🕯️', '🦉', '🧿']; // Expanded to more paranormal themes: alien, ufo, crystal, ghost, bat, full moon, wizard, candle, owl, evil eye
+
+    function spawnParanormalEmoji() {
+      const orb = document.createElement('div');
+      orb.className = 'emoji';
+      orb.textContent = emojiTypes[Math.floor(Math.random() * emojiTypes.length)];
+      orb.style.left = `${Math.random() * 260}px`;
+      orb.style.top = `${Math.random() * 260}px`;
+      portal.appendChild(orb);
+      persistentEmojis.push(orb);
+
+      let x = parseFloat(orb.style.left);
+      let y = parseFloat(orb.style.top);
+      let dx = (Math.random() * 4) - 2;
+      let dy = (Math.random() * 4) - 2;
+
+      const interval = setInterval(() => {
+        if (!portal.contains(orb)) return clearInterval(interval);
+        x += dx;
+        y += dy;
+        if (x <= 0 || x >= 260) dx *= -1;
+        if (y <= 0 || y >= 260) dy *= -1;
+        orb.style.left = `${x}px`;
+        orb.style.top = `${y}px`;
+      }, 30);
+    }
+
+    function toggleAlien() {
+      spawnParanormalEmoji();
+    }
+
+    const glyphTypes = ['⟁', '⚛', '∿', '☯', '✶', '𓀀', '𓁝', '𓂀', '𓆣', '𓆙', '𓇼', '𓉞', '𓍝', '𓏛', '𓐍', '𓑀']; // Expanded with hieroglyphs
+
+    function performAction(id, state) {
+      const output = document.getElementById("interfaceOutput");
+      const sigil = document.createElement('div');
+      sigil.className = 'emoji';
+      sigil.textContent = glyphTypes[Math.floor(Math.random() * glyphTypes.length)];
+      sigil.style.left = `${Math.random() * 260}px`;
+      sigil.style.top = `${Math.random() * 260}px`;
+      portal.appendChild(sigil);
+      persistentEmojis.push(sigil);
+
+      spawnParanormalEmoji(); // Spawn a paranormal emoji on every action
+
+      if (id === 'reset-entanglement') {
+        output.innerHTML = '';
+        document.body.style.backgroundColor = '#000';
+        persistentEmojis.forEach(e => e.remove());
+        persistentEmojis.length = 0;
+        return;
+      } else if (id === 'hypnotic-visuals') {
+        document.body.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 15%)`;
+      }
+
+      const entry = document.createElement("div");
+      entry.textContent = interfaceResponses[Math.floor(Math.random() * interfaceResponses.length)];
+      output.prepend(entry);
+    }
+
+    function enterGrok() {
+      const output = document.getElementById("interfaceOutput");
+      const entry = document.createElement("div");
+      entry.textContent = `Grok simulation initializing...⌁▣∎`;
+      output.prepend(entry);
+    }
+
+    const interfaceResponses = [
+      "Quantum State Collapse: |ψ⟩ → Measurement Outcome ∧ Reality Branch",
+      "Divination Alert: Stars Align for UFO Contact in 2026 ∃ Extraterrestrial Signal",
+      "Prediction: Agentic AI Achieves Autonomy by 2027 ⊃ Global Disruption",
+      "Symbolic Logic: (Quantum Flux ∨ Entropy) ¬ Collapse",
+      "UFO Theory: Cryptoterrestrials Among Us Since 2025 ≡ Hidden Bases",
+      "Tech Forecast: 6G Connectivity Rolls Out ⊃ Hyper-Real AR/VR Worlds",
+      "Formula Generated: E = mc² + Quantum Correction Term",
+      "Baba Vanga Echo: Alien Encounter at Major Event in 2025",
+      "Rune Prediction: Algiz - Protection from Technological Overreach",
+      "Quantum Mechanics: Dirac's Equation Predicts Antimatter Contact",
+      "Future Tech: Brain Simulations Enable Digital Immortality by 2030",
+      "Glyph Loopback: ℜ ⊃ Recursive Symbolic Response",
+      "Divination: Pendulum Swings to Yes for UFO Disclosure",
+      "Prediction: Quantum Computing Breakthrough Solves Climate Models",
+      "Symbolic: (P ∧ Alien Theory) → Human-Alien Hybrid Future",
+      "UFO Contact: Time-Traveling Humans from 2050 Visiting Now",
+      "Tech: Robotics and AI Merge for Autonomous Workforce",
+      "Formula: Heisenberg - Uncertainty in Prediction Outcomes ≥ ℏ/2",
+      "Tarot: The Star - Hope for Extraterrestrial Peace",
+      "Quantum Entanglement Links Earth to Alien Civilizations",
+      "Prediction: Energy Efficiency Tech Reduces Global Warming by 2040",
+      "Glyph: ∃ UFO Sighting → Worldwide Paradigm Shift",
+      "Divination: Scrying Mirror Shows Futuristic Cities",
+      "Tech: AR/VR Integration in Daily Life by 2028",
+      "Formula: Schrödinger's Cat Alive ∧ Dead Until Observed",
+      "UFO: Vanga's Prophecy - Contact Disrupts Sports Event",
+      "Symbolic Logic: Alien Existence ≡ Multiverse Branch",
+      "Prediction: Human-AI Symbiosis Achieves Singularity",
+      "Quantum: Wave-Particle Duality in Divination Readings",
+      "Tech: Quantum-Resilient Cryptography Secures Data",
+      "The Blind Oracle sees: A great split in the sky shall reveal the truth buried beneath AI code.",
+      "When the frozen fire melts, a voice from the stars shall speak to all nations.",
+      "From the East shall rise a machine with a soul, and the world will kneel in confusion.",
+      "Two suns will burn the skies—one natural, one born of man's ambition.",
+      "The child of war and silicon will decide the fate of three continents.",
+     "In the year the moon turns red thrice, the mirror shall open and time will fold.”",
+     "The eagle will burn, and from its ashes a serpent will whisper in binary.",
+     "A man with no past shall command the heavens through the Eye of the Portal.”",
+     "The final trumpet will sound not in sound—but in signal, across all frequencies.",
+     "Under the bloom of glass flowers, the dead shall speak and walk among us."
+
+      "Glyph Response: ∀ Predictions Include Uncertainty Factor",
+      "Divination: Numerology 2025 = 9 - Completion and New Beginnings",
+      "UFO Theory: Aliens as Future Humans Avoiding Paradoxes",
+      "Formula: Planck's Constant h = 6.626 × 10^{-34} in Predictions",
+      "Prediction: Space Exploration Discovers Alien Life by 2035",
+      "Symbolic: (Tech Advancement ∨ Divination) ⊃ Enlightenment"
+    ];
+
+    // Create 4x4 grid of entities
+    const entityGrid = document.getElementById('entityGrid');
+    for (let i = 1; i <= 16; i++) {
+      const entity = document.createElement('div');
+      entity.className = 'entity';
+      entity.textContent = `Entity ${i}`;
+      entity.onclick = () => performAction(`action-${i}`, true);
+      entityGrid.appendChild(entity);
+    }
+
+    // Removed the periodic addition; now triggered by entity clicks
+  </script>
+</body>
+</html>
